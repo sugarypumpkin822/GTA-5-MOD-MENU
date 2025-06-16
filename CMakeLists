@@ -31,18 +31,28 @@ include_directories(
   # ${PROJECT_SOURCE_DIR}/external/imgui
 )
 
-# --- Source files ---
+# --- Component subdirectories ---
+add_subdirectory(src/core)
+add_subdirectory(src/features)
+add_subdirectory(src/ui)
+add_subdirectory(src/tools)
+add_subdirectory(src/platform)
+add_subdirectory(src/network)
+add_subdirectory(src/audio)
 
-# Find all .cpp files under src/ recursively
-file(GLOB_RECURSE SOURCES
-  "${PROJECT_SOURCE_DIR}/src/*.cpp"
-)
-
-# Optional: If you want to build as a DLL (mod menus usually are DLLs)
+# --- Main target ---
 set(BUILD_AS_DLL ON CACHE BOOL "Build the mod menu as a DLL")
 
 if(BUILD_AS_DLL)
-  add_library(GTA5ModMenu SHARED ${SOURCES})
+  add_library(GTA5ModMenu SHARED
+    $<TARGET_OBJECTS:core>
+    $<TARGET_OBJECTS:features>
+    $<TARGET_OBJECTS:ui>
+    $<TARGET_OBJECTS:tools>
+    $<TARGET_OBJECTS:platform>
+    $<TARGET_OBJECTS:network>
+    $<TARGET_OBJECTS:audio>
+  )
 
   # Set DLL output name and prefix/suffix if needed
   set_target_properties(GTA5ModMenu PROPERTIES
@@ -55,7 +65,15 @@ if(BUILD_AS_DLL)
   target_compile_definitions(GTA5ModMenu PRIVATE "GTA5MODMENU_DLL_EXPORTS")
 
 else()
-  add_executable(GTA5ModMenu ${SOURCES})
+  add_executable(GTA5ModMenu
+    $<TARGET_OBJECTS:core>
+    $<TARGET_OBJECTS:features>
+    $<TARGET_OBJECTS:ui>
+    $<TARGET_OBJECTS:tools>
+    $<TARGET_OBJECTS:platform>
+    $<TARGET_OBJECTS:network>
+    $<TARGET_OBJECTS:audio>
+  )
   set_target_properties(GTA5ModMenu PROPERTIES
     OUTPUT_NAME "GTA5ModMenu"
     RUNTIME_OUTPUT_DIRECTORY ${BIN_DIR}
@@ -67,10 +85,7 @@ endif()
 # Windows-specific flags
 if(MSVC)
   # Warning level 4 and exceptions enabled
-  target_compile_options(GTA5ModMenu PRIVATE /W4 /EHsc)
-
-  # Optional: Additional security or optimization flags
-  target_compile_options(GTA5ModMenu PRIVATE /Zi /FS)
+  target_compile_options(GTA5ModMenu PRIVATE /W4 /EHsc /Zi /FS)
 
   # Debug info
   if(CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -100,6 +115,13 @@ target_link_libraries(GTA5ModMenu
   gdi32
   winmm
   dxguid
+  core
+  features
+  ui
+  tools
+  platform
+  network
+  audio
 )
 
 # --- External dependencies (placeholders) ---
@@ -118,9 +140,4 @@ target_link_libraries(GTA5ModMenu
 # )
 
 # --- Summary ---
-message(STATUS "Source files:")
-foreach(src ${SOURCES})
-  message(STATUS "  ${src}")
-endforeach()
-
 message(STATUS "Build output folder: ${BIN_DIR}")
