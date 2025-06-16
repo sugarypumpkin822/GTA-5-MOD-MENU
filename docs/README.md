@@ -1,6 +1,6 @@
 # GTA 5 Mod Menu
 
-![GTA 5 Mod Menu](assets/banner.png)  
+![GTA 5 Mod Menu](/assets/banner.png)  
 *A custom mod menu for Grand Theft Auto V.*
 
 ---
