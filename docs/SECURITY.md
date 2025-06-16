@@ -6,7 +6,7 @@ We take security seriously. If you discover a security vulnerability in the GTA 
 
 ### How to Report
 
-- Send an email to: **security@sugarypumpkin822.com**  
+- Send an email to: **ryan4567dfr@outlook.com**  
   (If you don't have this email, please use the GitHub issues with the label `security` and mark it private if possible.)
 
 - Include:  
