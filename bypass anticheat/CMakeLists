@@ -1,0 +1,122 @@
+cmake_minimum_required(VERSION 3.15)
+
+# Project metadata
+project(BypassAntiCheat LANGUAGES CXX)
+
+# C++ standard and flags
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+# Default to Release build if no build type specified
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose build type (Debug or Release)" FORCE)
+endif()
+
+message(STATUS "Configuring BypassAntiCheat in ${CMAKE_BUILD_TYPE} mode")
+
+# Output directories
+set(BIN_DIR "${CMAKE_BINARY_DIR}/bin/${CMAKE_BUILD_TYPE}")
+set(LIB_DIR "${CMAKE_BINARY_DIR}/lib/${CMAKE_BUILD_TYPE}")
+set(OBJ_DIR "${CMAKE_BINARY_DIR}/obj/${CMAKE_BUILD_TYPE}")
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BIN_DIR})
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${LIB_DIR})
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${LIB_DIR})
+
+# Include directories
+include_directories(
+  ${PROJECT_SOURCE_DIR}/include
+  "${PROJECT_SOURCE_DIR}/bypass anticheat/include"
+)
+
+# Gather source files (C and C++ files)
+file(GLOB_RECURSE SOURCES
+  "${PROJECT_SOURCE_DIR}/bypass anticheat/*.cpp"
+  "${PROJECT_SOURCE_DIR}/bypass anticheat/*.c"
+  "${PROJECT_SOURCE_DIR}/bypass anticheat/*.h"
+  "${PROJECT_SOURCE_DIR}/bypass anticheat/*.hpp"
+)
+
+# Option to build as static library or shared DLL
+option(BUILD_SHARED_LIBS "Build BypassAntiCheat as shared library (DLL)" OFF)
+
+if(BUILD_SHARED_LIBS)
+  add_library(BypassAntiCheat SHARED ${SOURCES})
+
+  # Remove default "lib" prefix on Windows
+  set_target_properties(BypassAntiCheat PROPERTIES
+    PREFIX ""
+    OUTPUT_NAME "BypassAntiCheat"
+    RUNTIME_OUTPUT_DIRECTORY ${BIN_DIR}
+  )
+
+  # Define export macro
+  target_compile_definitions(BypassAntiCheat PRIVATE "BYPASS_ANTICHEAT_EXPORTS")
+else()
+  add_library(BypassAntiCheat STATIC ${SOURCES})
+
+  set_target_properties(BypassAntiCheat PROPERTIES
+    OUTPUT_NAME "BypassAntiCheat"
+    ARCHIVE_OUTPUT_DIRECTORY ${LIB_DIR}
+  )
+endif()
+
+# Compiler options
+if(MSVC)
+  # Enable high warning level, exceptions, multi-threaded runtime
+  target_compile_options(BypassAntiCheat PRIVATE /W4 /EHsc /MP)
+  
+  if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_compile_definitions(BypassAntiCheat PRIVATE "_DEBUG")
+    target_compile_options(BypassAntiCheat PRIVATE /Zi) # Debug info
+  else()
+    target_compile_definitions(BypassAntiCheat PRIVATE "NDEBUG")
+    target_compile_options(BypassAntiCheat PRIVATE /O2)
+  endif()
+
+else()
+  # GCC / Clang flags
+  target_compile_options(BypassAntiCheat PRIVATE
+    -Wall -Wextra -Wpedantic -Wshadow
+  )
+  if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_compile_definitions(BypassAntiCheat PRIVATE "_DEBUG")
+    target_compile_options(BypassAntiCheat PRIVATE -g)
+  else()
+    target_compile_definitions(BypassAntiCheat PRIVATE "NDEBUG")
+    target_compile_options(BypassAntiCheat PRIVATE -O2)
+  endif()
+endif()
+
+# Linker settings: link Windows system libraries
+target_link_libraries(BypassAntiCheat
+  user32
+  gdi32
+  winmm
+)
+
+# External dependencies placeholder
+# add_subdirectory(${PROJECT_SOURCE_DIR}/external/some_lib)
+# target_link_libraries(BypassAntiCheat some_lib)
+
+# Post-build step example: Copy DLLs to output folder
+if(BUILD_SHARED_LIBS AND MSVC)
+  add_custom_command(TARGET BypassAntiCheat POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+      "${PROJECT_SOURCE_DIR}/external/some_dep.dll"
+      "${BIN_DIR}/some_dep.dll"
+  )
+endif()
+
+# Group headers and sources for IDEs (Visual Studio, etc)
+source_group(TREE "${PROJECT_SOURCE_DIR}/bypass anticheat" PREFIX "BypassAntiCheat" FILES ${SOURCES})
+
+# Print summary
+message(STATUS "Sources found for BypassAntiCheat:")
+foreach(src IN LISTS SOURCES)
+  message(STATUS "  ${src}")
+endforeach()
+
+message(STATUS "BypassAntiCheat binary output directory: ${BIN_DIR}")
+message(STATUS "BypassAntiCheat library output directory: ${LIB_DIR}")
